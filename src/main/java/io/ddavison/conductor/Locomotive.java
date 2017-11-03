@@ -63,7 +63,7 @@ public class Locomotive implements Conductor<Locomotive> {
      */
     public Config configuration;
 
-    public WebDriver driver;
+    private WebDriver driver;
 
     // max seconds before failing a script.
     public int MAX_ATTEMPTS = 5;
@@ -261,6 +261,11 @@ public class Locomotive implements Conductor<Locomotive> {
     @After
     public void teardown() {
         driver.quit();
+    }
+    
+    public WebDriver getDriver()
+    {
+      return driver;
     }
 
     /**
