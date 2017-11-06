@@ -10,23 +10,31 @@
 package io.ddavison.conductor;
 
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import io.ddavison.conductor.util.JvmUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.openqa.selenium.*;
+import org.openqa.selenium.WebDriver.Options;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.safari.SafariDriver;
+import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
@@ -39,6 +47,7 @@ import java.util.*;
 import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static org.junit.Assert.*;
 
@@ -123,21 +132,34 @@ public class Locomotive implements Conductor<Locomotive> {
 
         configuration = new LocomotiveConfig(testConfiguration, props);
 
-        Capabilities capabilities;
-
         baseUrl = configuration.url();
+        
+        DesiredCapabilities capabilities = null;
+        if(!configuration.capabilities().isEmpty())
+        {
+          Gson gson = new Gson();
+          capabilities = gson.fromJson(configuration.capabilities(), DesiredCapabilities.class);
+        }
 
         log.debug(String.format("\n=== Configuration ===\n" +
         "\tURL:     %s\n" +
         "\tBrowser: %s\n" +
         "\tHub:     %s\n" +
-        "\tBase url: %s\n", configuration.url(), configuration.browser().moniker, configuration.hub(), configuration.baseUrl()));
+        "\tBase url: %s\n" +
+        "\tOptions: %s\n" +
+        "\tCapabilities: %s\n", configuration.url(), configuration.browser().moniker, configuration.hub(), configuration.baseUrl(), configuration.options(), configuration.capabilities()));
 
         boolean isLocal = StringUtils.isEmpty(configuration.hub());
-
+        
         switch (configuration.browser()) {
             case CHROME:
-                capabilities = DesiredCapabilities.chrome();
+                if(configuration.capabilities().isEmpty())
+                {
+                  capabilities = DesiredCapabilities.chrome();
+                }
+                ChromeOptions chromeOptions = new ChromeOptions();
+                chromeOptions.addArguments(configuration.options());
+                capabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
                 if (isLocal) try {
                     driver = new ChromeDriver(capabilities);
                 } catch (Exception x) {
@@ -146,8 +168,14 @@ public class Locomotive implements Conductor<Locomotive> {
                 }
                 break;
             case FIREFOX:
+              if(configuration.capabilities().isEmpty())
+              {
                 capabilities = DesiredCapabilities.firefox();
-                if (isLocal) try {
+              }
+              FirefoxOptions firefoxOptions = new FirefoxOptions();
+              firefoxOptions.addArguments(configuration.options());
+              capabilities.setCapability(FirefoxOptions.FIREFOX_OPTIONS, firefoxOptions);
+              if (isLocal) try {
                     driver = new FirefoxDriver(capabilities);
                 } catch (Exception x) {
                     x.printStackTrace();
@@ -156,8 +184,11 @@ public class Locomotive implements Conductor<Locomotive> {
                 }
                 break;
             case INTERNET_EXPLORER:
+              if(configuration.capabilities().isEmpty())
+              {
                 capabilities = DesiredCapabilities.internetExplorer();
-                if (isLocal) try {
+              }
+              if (isLocal) try {
                     driver = new InternetExplorerDriver(capabilities);
                 } catch (Exception x) {
                     x.printStackTrace();
@@ -166,7 +197,10 @@ public class Locomotive implements Conductor<Locomotive> {
                 }
                 break;
             case EDGE:
-                capabilities = DesiredCapabilities.edge();
+                if(configuration.capabilities().isEmpty())
+                {
+                  capabilities = DesiredCapabilities.edge();
+                }
                 if (isLocal) try {
                     driver = new EdgeDriver(capabilities);
                 } catch (Exception x) {
@@ -176,8 +210,11 @@ public class Locomotive implements Conductor<Locomotive> {
                 }
                 break;
             case SAFARI:
+              if(configuration.capabilities().isEmpty())
+              {
                 capabilities = DesiredCapabilities.safari();
-                if (isLocal) try {
+              }
+              if (isLocal) try {
                     driver = new SafariDriver(capabilities);
                 } catch (Exception x) {
                     x.printStackTrace();
@@ -186,7 +223,10 @@ public class Locomotive implements Conductor<Locomotive> {
                 }
                 break;
             case PHANTOMJS:
-                capabilities = DesiredCapabilities.phantomjs();
+                if(!configuration.capabilities().isEmpty())
+                {
+                  capabilities = DesiredCapabilities.phantomjs();
+                }
                 if (isLocal) try {
                     driver = new PhantomJSDriver(capabilities);
                 } catch (Exception x) {

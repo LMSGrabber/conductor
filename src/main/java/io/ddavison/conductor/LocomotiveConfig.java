@@ -94,6 +94,36 @@ public class LocomotiveConfig implements Config {
         }
         return baseUrl;
     }
+    
+    @Override
+    public String capabilities() {
+        String capabilities = "";
+        if (!StringUtils.isEmpty(properties.getProperty(Constants.DEFAULT_PROPERTY_CAPABILITIES))) {
+          capabilities = properties.getProperty(Constants.DEFAULT_PROPERTY_CAPABILITIES);
+        }
+        if (testConfig != null && !StringUtils.isEmpty(testConfig.capabilities())) {
+          capabilities = testConfig.capabilities();
+        }
+        if (!StringUtils.isEmpty(JvmUtil.getJvmProperty(Constants.JVM_CONDUCTOR_CAPABILITIES))) {
+          capabilities = JvmUtil.getJvmProperty(Constants.JVM_CONDUCTOR_CAPABILITIES);
+        }
+        return capabilities;
+    }
+    
+    @Override
+    public String[] options() {
+        String[] options = {};
+        if (!StringUtils.isEmpty(properties.getProperty(Constants.DEFAULT_PROPERTY_OPTIONS))) {
+            options = properties.getProperty(Constants.DEFAULT_PROPERTY_OPTIONS).split(" ");
+        }
+        if (testConfig != null && testConfig.options().length > 0) {
+            options = testConfig.options();
+        }
+        if (!StringUtils.isEmpty(JvmUtil.getJvmProperty(Constants.JVM_CONDUCTOR_OPTIONS))) {
+            options = JvmUtil.getJvmProperty(Constants.JVM_CONDUCTOR_OPTIONS).split(" ");
+        }
+        return options;
+    }
 
     @Override
     public String path() {
