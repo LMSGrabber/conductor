@@ -21,4 +21,6 @@ public @interface Config {
     String hub() default "";
     String baseUrl() default "";
     String path() default "";
+    String[] options() default {};
+    String capabilities() default "";   //A GSON representation of a DesiredCapabilities. If empty, uses the default.
 }
